@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/usr/src/episodic
+    environment:
+      - ROCKET_PORT=3927
+      - DATABASE_URL='postgres://postgres:super_secret_password@db/episodic'
+    ports:
+      - 3927:3927
+    links:
+      - db
+    command: cargo watch -x run
+
+  db:
+    image: postgres:9
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+    environment:
+      POSTGRES_PASSWORD: super_secret_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+volumes:
+  pgdata: {}
