@@ -1,0 +1,12 @@
+-- Your SQL goes here
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  phone VARCHAR(10) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS login_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) NOT NULL,
+  token VARCHAR(6) NOT NULL
+);
