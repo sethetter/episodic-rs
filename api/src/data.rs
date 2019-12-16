@@ -1,10 +1,12 @@
 use diesel::prelude::*;
-use diesel::pg::PgConnection;
-use std::env;
+use diesel::r2d2::{self, ConnectionManager};
 
-pub fn connect_to_db() -> diesel::ConnectionResult<PgConnection> {
-    let db_url = env::var("DATABASE_URL").expect("Must configure DATABASE_URL");
-    PgConnection::establish(&db_url)
+pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
+
+pub fn get_db_pool() -> Pool {
+    let db_url = std::env::var("DATABASE_URL").expect("Database URL not configured.");
+    let db_manager = ConnectionManager::<PgConnection>::new(db_url);
+    r2d2::Pool::builder().build(db_manager).expect("Failed to create pool.")
 }
 
 #[derive(Serialize, Queryable)]

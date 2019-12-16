@@ -2,21 +2,28 @@ version: '3'
 
 services:
 
-  app:
+  api:
     build:
-      context: .
+      context: ./api
       dockerfile: Dockerfile.dev
     volumes:
-      - .:/usr/src/episodic
+      - ./api:/usr/src/episodic
     environment:
-      - ROCKET_ADDRESS=0.0.0.0
-      - ROCKET_PORT=3927
+      - ADDRESS=0.0.0.0
+      - PORT=3927
       - DATABASE_URL=postgres://postgres:super_secret_password@db/episodic
     ports:
       - 3927:3927
     links:
       - db
     command: cargo watch -x run
+
+  # web:
+  #   build:
+  #     context: web
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - .:/asdf/asdf/asdf
 
   db:
     image: postgres:9
