@@ -7,23 +7,27 @@ services:
       context: ./api
       dockerfile: Dockerfile.dev
     volumes:
-      - ./api:/usr/src/episodic
+      - ./api:/usr/src/episodic-api
     environment:
       - ADDRESS=0.0.0.0
       - PORT=3927
       - DATABASE_URL=postgres://postgres:super_secret_password@db/episodic
+    # TODO: unexpose the API from host, web only
     ports:
       - 3927:3927
     links:
       - db
     command: cargo watch -x run
 
-  # web:
-  #   build:
-  #     context: web
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - .:/asdf/asdf/asdf
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./web:/usr/src/episodic-web
+    ports:
+      - 3928:8000
+    command: cargo web start
 
   db:
     image: postgres:9

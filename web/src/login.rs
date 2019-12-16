@@ -37,39 +37,41 @@ impl Component for Login {
     }
 
     fn view(&self) -> Html<Self> {
-        let phone_block = move || -> Html<Login> {
-            html! {
-                <>
-                    <input type="phone",
-                        name="phone",
-                        placeholder="Phone Number"
-                        value=&self.phone />
-
-                    <button onclick=|_| Msg::Submit>{ "Login" }</button>
-                </>
-            }
-        };
-
-        let verify_block = move || -> Html<Login> {
-            if self.show_verify {
-                html! {
-                    <>
-                        <input type="number"
-                            name="verify_code"
-                            value=&self.verify_code />
-                        <button onclick=|_| Msg::Verify>{ "Verify" }</button>
-                    </>
-                }
-            } else {
-                html! {}
-            }
-        };
-
         html! {
             <>
-                { phone_block() }
-                { verify_block() }
+                { self.view_phone_input() }
+                { self.view_verify_input() }
             </>
+        }
+    }
+}
+
+impl Login {
+    fn view_phone_input(&self) -> Html<Self> {
+        html! {
+            <>
+                <input type="phone",
+                    name="phone",
+                    placeholder="Phone Number"
+                    value=&self.phone />
+
+                <button onclick=|_| Msg::Submit>{ "Login" }</button>
+            </>
+        }
+    }
+
+    fn view_verify_input(&self) -> Html<Self> {
+        if self.show_verify {
+            html! {
+                <>
+                    <input type="number"
+                        name="verify_code"
+                        value=&self.verify_code />
+                    <button onclick=|_| Msg::Verify>{ "Verify" }</button>
+                </>
+            }
+        } else {
+            html! {}
         }
     }
 }
