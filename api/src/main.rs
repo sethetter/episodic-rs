@@ -5,6 +5,7 @@ use actix_web::{App, HttpServer};
 
 pub mod routes;
 pub mod data;
+pub mod schema;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -14,7 +15,8 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .data(data::get_db_pool())
-            .service(routes::index)
+            .service(routes::health)
+            .service(routes::login)
     })
     .bind(format!("{}:{}", addr, port))?
     .start()
