@@ -26,8 +26,8 @@ services:
     volumes:
       - ./web:/usr/src/episodic-web
     ports:
-      - 3928:8000
-    command: cargo web start
+      - 3928:3928
+    command: cargo web start --host=0.0.0.0 --port=3928
 
   db:
     image: postgres:9

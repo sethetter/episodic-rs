@@ -4,4 +4,4 @@ RUN cargo install cargo-web
 
 WORKDIR /usr/src/episodic-web
 
-EXPOSE 8000
+EXPOSE 3928
