@@ -9,13 +9,6 @@ pub fn get_db_pool() -> DbPool {
     r2d2::Pool::builder().build(db_manager).expect("Failed to create pool.")
 }
 
-// #[derive(Serialize, Queryable)]
-// pub struct LoginToken {
-//     id: usize,
-//     user_id: usize,
-//     token: String,
-// }
-
 // #[derive(Serialize)]
 // pub struct WatchListItem {
 //     name: String,

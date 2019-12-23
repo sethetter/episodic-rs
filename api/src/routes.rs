@@ -18,7 +18,10 @@ pub struct LoginRequest {
 }
 
 #[post("/login")]
-pub async fn login(req: web::Json<LoginRequest>, pool: web::Data<DbPool>) -> Result<HttpResponse, AWError> {
+pub async fn login(
+    req: web::Json<LoginRequest>,
+    pool: web::Data<DbPool>,
+) -> Result<HttpResponse, AWError> {
     let phone = req.into_inner().phone;
     let conn = &pool.get().unwrap();
 
@@ -31,3 +34,31 @@ pub async fn login(req: web::Json<LoginRequest>, pool: web::Data<DbPool>) -> Res
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct VerifyRequest {
+    user_id: i32,
+    verify_code: String,
+}
+
+#[post("/login/verify")]
+pub async fn login_verify(
+    raw_req: web::Json<VerifyRequest>,
+    pool: web::Data<DbPool>
+) -> Result<HttpResponse, AWError> {
+    let conn = &pool.get().unwrap();
+    let req = raw_req.into_inner();
+
+    match users::token_for_user(conn.clone(), req.user_id) {
+        Ok(t) => {
+            if t.token == req.verify_code {
+                match users::clear_token(conn.clone(), t.id) {
+                    Ok(_) => Ok(HttpResponse::Ok().json("Success!")),
+                    Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
+                }
+            } else {
+                Ok(HttpResponse::BadRequest().json("Invalid"))
+            }
+        },
+        Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
+    }
+}

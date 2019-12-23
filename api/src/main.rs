@@ -18,6 +18,7 @@ async fn main() -> std::io::Result<()> {
             .data(data::get_db_pool())
             .service(routes::health)
             .service(routes::login)
+            .service(routes::login_verify)
     })
     .bind(format!("{}:{}", addr, port))?
     .start()
