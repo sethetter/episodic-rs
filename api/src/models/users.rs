@@ -3,6 +3,8 @@ use diesel::result::{Error as QueryError, QueryResult};
 
 use rand::Rng;
 
+use chrono::naive::NaiveDateTime;
+
 use crate::schema::users;
 use crate::schema::users::dsl::*;
 
@@ -49,6 +51,7 @@ pub struct LoginToken {
     pub id: i32,
     pub user_id: i32,
     pub token: String,
+    pub expiry: NaiveDateTime,
 }
 
 #[derive(Insertable)]
@@ -87,7 +90,6 @@ pub fn token_for_user(
     conn: &PgConnection,
     for_user_id: i32
 ) -> QueryResult<LoginToken> {
-    // TODO: allow tokens to expire
     login_tokens
         .filter(login_tokens::user_id.eq(for_user_id))
         .first::<LoginToken>(conn)

@@ -2,6 +2,7 @@ use {
     actix_web::{
         web, get, post, HttpResponse, Error as AWError
     },
+    chrono::Utc,
     super::data::DbPool,
     crate::models::users,
     serde::Deserialize,
@@ -50,13 +51,22 @@ pub async fn login_verify(
 
     match users::token_for_user(conn.clone(), req.user_id) {
         Ok(t) => {
-            if t.token == req.verify_code {
-                match users::clear_token(conn.clone(), t.id) {
+            match (t.token == req.verify_code, t.expiry > Utc::now().naive_utc()) {
+                // Token expired, clear it from the DB.
+                (_, false) => match users::clear_token(conn.clone(), t.id) {
+                    Ok(_) => Ok(HttpResponse::BadRequest().json("Token expired")),
+                    Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
+                },
+
+                // Token mismatch, allow trying again until expiry hits.
+                (false, _) => Ok(HttpResponse::BadRequest().json("Token mismatch")),
+
+                // Success! Clear and allow login.
+                (true, true) => match users::clear_token(conn.clone(), t.id) {
+                    // TODO: store the session somewhere.
                     Ok(_) => Ok(HttpResponse::Ok().json("Success!")),
                     Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
-                }
-            } else {
-                Ok(HttpResponse::BadRequest().json("Invalid"))
+                },
             }
         },
         Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
