@@ -1,26 +1,26 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+
+#[macro_use] extern crate rocket;
+#[macro_use] extern crate rocket_contrib;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate diesel;
 
-use actix_web::{App, HttpServer};
+use rocket_contrib::databases;
 
 pub mod routes;
-pub mod data;
 pub mod schema;
 pub mod models;
 
-#[actix_rt::main]
-async fn main() -> std::io::Result<()> {
-    let addr = std::env::var("ADDRESS").expect("Must configure ADDRESS.");
-    let port = std::env::var("PORT").expect("Must configure PORT.");
+#[database("postgres")]
+pub struct DbConn(databases::diesel::PgConnection);
 
-    HttpServer::new(move || {
-        App::new()
-            .data(data::get_db_pool())
-            .service(routes::health)
-            .service(routes::login)
-            .service(routes::login_verify)
-    })
-    .bind(format!("{}:{}", addr, port))?
-    .start()
-    .await
+fn main() {
+    rocket::ignite()
+        .attach(DbConn::fairing())
+        .mount("/", routes![
+               routes::health,
+               routes::login,
+               routes::login_verify,
+        ])
+        .launch();
 }

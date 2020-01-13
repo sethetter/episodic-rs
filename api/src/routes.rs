@@ -1,74 +1,75 @@
 use {
-    actix_web::{
-        web, get, post, HttpResponse, Error as AWError
+    rocket::{
+        http::Status,
+    },
+    rocket_contrib::{
+        json::Json,
     },
     chrono::Utc,
-    super::data::DbPool,
-    crate::models::users,
-    serde::Deserialize,
+    crate::{
+        DbConn,
+        models::users,
+    },
 };
 
 #[get("/health")]
-pub async fn health() -> Result<HttpResponse, AWError> {
-    Ok(HttpResponse::Ok().json(format!("OK")))
+pub fn health() -> &'static str {
+    "OK"
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct LoginRequest {
     phone: String,
 }
 
-#[post("/login")]
-pub async fn login(
-    req: web::Json<LoginRequest>,
-    pool: web::Data<DbPool>,
-) -> Result<HttpResponse, AWError> {
-    let phone = req.into_inner().phone;
-    let conn = &pool.get().unwrap();
-
-    match users::find_or_insert_user(conn.clone(), phone.as_str()) {
-        Ok(user) => match users::new_login_token(conn.clone(), user.id) {
-            Ok(_) => Ok(HttpResponse::Ok().json(user)),
-            Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
-        },
-        Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
-    }
+#[derive(Serialize)]
+pub struct LoginResponse {
+    user: users::User,
 }
 
-#[derive(Serialize, Deserialize)]
+#[post("/login", format = "application/json", data = "<req>")]
+pub fn login(
+    req: Json<LoginRequest>,
+    conn: DbConn,
+) -> Result<Json<LoginResponse>, Status> {
+    let phone = req.into_inner().phone;
+
+    let user = users::find_or_insert_user(&conn, phone.as_str())
+        .map_err(|_| { Status::InternalServerError })?;
+
+    users::new_login_token(&conn, user.id)
+        .map_err(|_| { Status::InternalServerError })?;
+
+    Ok(Json(LoginResponse{ user }))
+}
+
+#[derive(Deserialize)]
 pub struct VerifyRequest {
     user_id: i32,
     verify_code: String,
 }
 
-#[post("/login/verify")]
-pub async fn login_verify(
-    raw_req: web::Json<VerifyRequest>,
-    pool: web::Data<DbPool>
-) -> Result<HttpResponse, AWError> {
-    let conn = &pool.get().unwrap();
-    let req = raw_req.into_inner();
+#[post("/login/verify", data = "<req>")]
+pub fn login_verify(
+    req: Json<VerifyRequest>,
+    conn: DbConn,
+) -> Result<Status, Status> {
+    let t = users::token_for_user(&conn, req.user_id)
+        .map_err(|_| Status::InternalServerError)?;
 
-    match users::token_for_user(conn.clone(), req.user_id) {
-        Ok(t) => {
-            match (t.token == req.verify_code, t.expiry > Utc::now().naive_utc()) {
-                // Token expired, clear it from the DB.
-                (_, false) => match users::clear_token(conn.clone(), t.id) {
-                    Ok(_) => Ok(HttpResponse::BadRequest().json("Token expired")),
-                    Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
-                },
+    let token_match = t.token == req.verify_code;
+    let token_expired = t.expiry < Utc::now().naive_utc();
 
-                // Token mismatch, allow trying again until expiry hits.
-                (false, _) => Ok(HttpResponse::BadRequest().json("Token mismatch")),
+    if !token_match && !token_expired {
+        return Ok(Status::BadRequest);
+    }
 
-                // Success! Clear and allow login.
-                (true, true) => match users::clear_token(conn.clone(), t.id) {
-                    // TODO: store the session somewhere.
-                    Ok(_) => Ok(HttpResponse::Ok().json("Success!")),
-                    Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
-                },
-            }
-        },
-        Err(e) => Ok(HttpResponse::InternalServerError().body(format!("{:?}", e))),
+    users::clear_token(&conn, t.id)
+        .map_err(|_| Status::InternalServerError)?;
+
+    if token_expired {
+        Err(Status::BadRequest)
+    } else {
+        Ok(Status::Ok)
     }
 }
