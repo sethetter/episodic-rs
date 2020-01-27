@@ -1,8 +1,9 @@
-FROM rustlang/rust:nightly
+FROM rustlang/rust:nightly AS base
 
 RUN cargo install diesel_cli --no-default-features --features postgres
 RUN cargo install cargo-watch
 
-WORKDIR /usr/src/episodic-api
+FROM base
 
+WORKDIR /usr/src/episodic-api
 EXPOSE 3927

@@ -5,14 +5,12 @@
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate diesel;
 
-use rocket_contrib::databases;
-
 pub mod routes;
 pub mod schema;
 pub mod models;
 
-#[database("postgres")]
-pub struct DbConn(databases::diesel::PgConnection);
+#[database("primary_db")]
+pub struct DbConn(rocket_contrib::databases::diesel::PgConnection);
 
 fn main() {
     rocket::ignite()

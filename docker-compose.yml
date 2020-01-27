@@ -1,6 +1,15 @@
 version: '3'
 
 services:
+  caddy:
+    image: abiosoft/caddy:latest
+    volumes:
+      - ./Caddyfile.dev:/etc/Caddyfile
+    ports:
+      - 2015:2015
+    links:
+      - api
+      - web
 
   api:
     build:
@@ -9,12 +18,10 @@ services:
     volumes:
       - ./api:/usr/src/episodic-api
     environment:
-      - ADDRESS=0.0.0.0
-      - PORT=3927
+      - ROCKET_ADDRESS=0.0.0.0
+      - ROCKET_PORT=3927
+      - ROCKET_DATABASES={primary_db={url="postgres://postgres:super_secret_password@db/episodic"}}
       - DATABASE_URL=postgres://postgres:super_secret_password@db/episodic
-    # TODO: unexpose the API from host, web only
-    ports:
-      - 3927:3927
     links:
       - db
     command: cargo watch -x run
@@ -25,12 +32,10 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./web:/usr/src/episodic-web
-    ports:
-      - 3928:3928
     command: cargo web start --host=0.0.0.0 --port=3928
 
   db:
-    image: postgres:9
+    image: postgres:12
     volumes:
       - pgdata:/var/lib/postgresql/data/pgdata
     environment:

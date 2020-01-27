@@ -12,7 +12,7 @@ use {
     },
 };
 
-#[get("/health")]
+#[get("/api/health")]
 pub fn health() -> &'static str {
     "OK"
 }
@@ -27,7 +27,7 @@ pub struct LoginResponse {
     user: users::User,
 }
 
-#[post("/login", format = "application/json", data = "<req>")]
+#[post("/api/login", format = "application/json", data = "<req>")]
 pub fn login(
     req: Json<LoginRequest>,
     conn: DbConn,
@@ -49,7 +49,7 @@ pub struct VerifyRequest {
     verify_code: String,
 }
 
-#[post("/login/verify", data = "<req>")]
+#[post("/api/login/verify", data = "<req>")]
 pub fn login_verify(
     req: Json<VerifyRequest>,
     conn: DbConn,

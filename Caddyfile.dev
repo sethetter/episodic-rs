@@ -1,0 +1,9 @@
+0.0.0.0
+
+proxy /api api:3927 {
+  transparent
+}
+
+proxy / web:3928 {
+  transparent
+}
