@@ -1,0 +1,7 @@
+-- Your SQL goes here
+CREATE TABLE IF NOT EXISTS shows (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  tmdb_id INTEGER NOT NULL,
+  user_id INTEGER REFERENCES users(id) UNIQUE NOT NULL
+);

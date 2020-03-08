@@ -60,8 +60,8 @@ impl Component for Login {
             props,
             link,
 
-            phone: format!(""),
-            verify: format!(""),
+            phone: "".to_string(),
+            verify: "".to_string(),
             user: None,
             loading: false,
             show_verify: false,

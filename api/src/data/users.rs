@@ -20,24 +20,24 @@ pub struct User {
 
 #[derive(Insertable)]
 #[table_name = "users"]
-pub struct NewUser<'a> {
-    name: &'a str,
-    phone: &'a str,
+pub struct NewUser {
+    name: String,
+    phone: String,
 }
 
 pub fn find_or_insert_user(
     conn: &PgConnection,
-    phone_input: &str,
+    phone_input: String,
 ) -> QueryResult<User> {
-    match users.filter(phone.eq(phone_input)).first::<User>(conn) {
+    match users.filter(phone.eq(phone_input.clone())).first::<User>(conn) {
         // User exists? Return it.
         Ok(u) => Ok(u),
 
         // Not found? Create it.
         Err(QueryError::NotFound) => diesel::insert_into(users::table)
             .values(NewUser {
-                name: "New User",
-                phone: phone_input,
+                name: "New User".to_string(),
+                phone: phone_input.clone(),
             })
             .get_result::<User>(conn),
 

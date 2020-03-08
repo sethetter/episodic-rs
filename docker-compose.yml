@@ -9,7 +9,7 @@ services:
       - 2015:2015
     links:
       - api
-      - web
+      # - web
 
   api:
     build:
@@ -18,21 +18,20 @@ services:
     volumes:
       - ./api:/usr/src/episodic-api
     environment:
-      - ROCKET_ADDRESS=0.0.0.0
-      - ROCKET_PORT=3927
-      - ROCKET_DATABASES={primary_db={url="postgres://postgres:super_secret_password@db/episodic"}}
+      - APP_HOST=0.0.0.0
+      - APP_PORT=3927
       - DATABASE_URL=postgres://postgres:super_secret_password@db/episodic
     links:
       - db
-    command: cargo watch -x run
+    command: cargo run
 
-  web:
-    build:
-      context: ./web
-      dockerfile: Dockerfile.dev
-    volumes:
-      - ./web:/usr/src/episodic-web
-    command: cargo web start --host=0.0.0.0 --port=3928
+  # web:
+  #   build:
+  #     context: ./web
+  #     dockerfile: Dockerfile.dev
+  #   volumes:
+  #     - ./web:/usr/src/episodic-web
+  #   command: cargo web start --host=0.0.0.0 --port=3928
 
   db:
     image: postgres:12
